@@ -7,7 +7,7 @@ import java.io.File
  * @return The initial state and a set of obstacle positions
  */
 class PuzzleFileReader(private val file: String) {
-    fun readFile(): Pair<State, Barriers> {
+    fun readFile(): PuzzleInfo {
         val inputStream = File(file).inputStream()
         val input = mutableListOf<String>() // collect all lines from the file to be processed later
         inputStream.bufferedReader().useLines { lines -> lines.forEach { input.add(it) } }
@@ -51,6 +51,6 @@ class PuzzleFileReader(private val file: String) {
             }
         }
         println(state)
-        return Pair(state, barriers)
+        return PuzzleInfo(state, barriers, Pair(rows, cols))
     }
 }
