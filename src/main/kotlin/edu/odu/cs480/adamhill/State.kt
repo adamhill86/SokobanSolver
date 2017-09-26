@@ -1,5 +1,5 @@
 package edu.odu.cs480.adamhill
-
+// TODO: Experiment with changing blockPositions and storagePositions to HashSets
 /**
  * Maintains a record of where the robot, blocks, storage positions, and obstacles are
  */
@@ -17,6 +17,24 @@ data class State(val robot: Robot, val blockPositions: MutableList<Point>,
         }
         // TODO: Write unit test for this. Check for reference vs value
         return true
+    }
+
+    /**
+     * Make a deep copy of all block positions
+     */
+    fun copyBlockPositions(): MutableList<Point> {
+        val newPositions = mutableListOf<Point>()
+        blockPositions.forEach { newPositions.add(it) }
+        return newPositions
+    }
+
+    /**
+     * Make a deep copy of all storage positions
+     */
+    fun copyStoragePositions(): MutableList<Point> {
+        val newPositions = mutableListOf<Point>()
+        storagePositions.forEach { newPositions.add(it) }
+        return newPositions
     }
 
     override fun toString(): String {

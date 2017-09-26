@@ -1,6 +1,7 @@
 package edu.odu.cs480.adamhill
 
-class GameController(initialState: Node<State>, val obstacles: Barriers) {
+class GameController(initialState: Node<State>, val obstacles: Barriers,
+                     private val gameRows: Int, private val gameCols: Int) {
     val graph = Graph(initialState) // create a graph with the initial state as the root
 
     /**

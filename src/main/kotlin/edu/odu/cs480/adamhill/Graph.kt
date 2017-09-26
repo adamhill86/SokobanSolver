@@ -86,10 +86,8 @@ class Graph(val root: Node<*>) {
             }
         }
 
-        if (distance[goal] != Int.MAX_VALUE) {
-            return extractPath(goal, predecessor)
-        }
-        return null // return null if no path to the goal was not found
+        if (distance[goal] != Int.MAX_VALUE) return extractPath(goal, predecessor)
+        return null // no path to the goal was found
     }
 
     /**
@@ -110,6 +108,74 @@ class Graph(val root: Node<*>) {
 
         path.add(0, root)
         return path
+    }
+
+    /**
+     * Calculates all robot moves from the current state
+     * @param state The current state of the map
+     * @param obstacles The set of obstacle positions
+     * @return The list of all possible moves (or null if none exist)
+     */
+    fun calculateMoves(state: Node<State>, obstacles: Barriers): MutableList<Node<State>>? {
+        val possibleMoves = mutableListOf<Node<State>>()
+        val robot = state.value.robot
+        val northPoint = Point(robot.position.x, robot.position.y - 1)
+        val southPoint = Point(robot.position.x, robot.position.y + 1)
+        val eastPoint = Point(robot.position.x + 1, robot.position.y)
+        val westPoint = Point(robot.position.x - 1, robot.position.y)
+
+        // TODO: Refactor State creation code. Move to function
+        // check moving north
+        if (isLegalMove(state, obstacles, northPoint)) {
+            val robotCopy = Robot(northPoint)
+            val blockPositions = state.value.copyBlockPositions()
+            val storagePositions = state.value.copyStoragePositions()
+            val northState = Node(State(robotCopy, blockPositions, storagePositions))
+            possibleMoves.add(northState)
+        }
+
+        // check moving south
+        if (isLegalMove(state, obstacles, southPoint)) {
+            val robotCopy = Robot(southPoint)
+            val blockPositions = state.value.copyBlockPositions()
+            val storagePositions = state.value.copyStoragePositions()
+            val southState = Node(State(robotCopy, blockPositions, storagePositions))
+            possibleMoves.add(southState)
+        }
+
+        // check moving east
+        if (isLegalMove(state, obstacles, eastPoint)) {
+            val robotCopy = Robot(eastPoint)
+            val blockPositions = state.value.copyBlockPositions()
+            val storagePositions = state.value.copyStoragePositions()
+            val eastState = Node(State(robotCopy, blockPositions, storagePositions))
+            possibleMoves.add(eastState)
+        }
+
+        // check moving west
+        if (isLegalMove(state, obstacles, westPoint)) {
+            val robotCopy = Robot(westPoint)
+            val blockPositions = state.value.copyBlockPositions()
+            val storagePositions = state.value.copyStoragePositions()
+            val westState = Node(State(robotCopy, blockPositions, storagePositions))
+            possibleMoves.add(westState)
+        }
+        return possibleMoves
+    }
+
+    /**
+     * Calculates whether a robot move is legal
+     * @param state The current state of the map
+     * @param obstacles The set of obstacle positions
+     * @param nextPosition The position of the potential move
+     * @return True if the move is legal, false otherwise
+     */
+    fun isLegalMove(state: Node<State>, obstacles: Barriers, nextPosition: Point): Boolean {
+        // for now, only check to see if the position matches an obstacle's position
+        if (obstacles.contains(nextPosition)) return false
+        // TODO: also make sure the point isn't out of bounds
+        if (nextPosition.x < 0 || nextPosition.y < 0) return false
+        return true
     }
 
     override fun equals(other: Any?): Boolean {
