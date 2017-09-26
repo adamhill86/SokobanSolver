@@ -10,8 +10,8 @@ fun main(args: Array<String>) {
 
     val file = "data/test.txt"
     val puzzleFileReader = PuzzleFileReader(file)
-    val pair = puzzleFileReader.readFile()
-    println(pair.second.toString())
+    val puzzleInfo = puzzleFileReader.readFile()
+    println(puzzleInfo.state.toString())
 
     a.addChildren(b, c)
     b.addChildren(a, d, e)
@@ -28,6 +28,7 @@ fun main(args: Array<String>) {
     val dfs = graph.dfs(d)
     dfs?.forEach { println(it.value) }
 
-    val gameController = GameController(Node(pair.first), pair.second)
+    val gameController = GameController(Node(puzzleInfo.state), puzzleInfo.barriers,
+            puzzleInfo.dimensions.first, puzzleInfo.dimensions.second)
     println(gameController.graph.root.toString())
 }
