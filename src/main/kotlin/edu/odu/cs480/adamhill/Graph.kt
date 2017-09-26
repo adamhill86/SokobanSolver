@@ -114,9 +114,10 @@ class Graph(val root: Node<*>) {
      * Calculates all robot moves from the current state
      * @param state The current state of the map
      * @param obstacles The set of obstacle positions
+     * @param dimensions The number of rows and columns in the map
      * @return The list of all possible moves (or null if none exist)
      */
-    fun calculateMoves(state: Node<State>, obstacles: Barriers): MutableList<Node<State>>? {
+    fun calculateMoves(state: Node<State>, obstacles: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>>? {
         val possibleMoves = mutableListOf<Node<State>>()
         val robot = state.value.robot
         val northPoint = Point(robot.position.x, robot.position.y - 1)
@@ -126,7 +127,7 @@ class Graph(val root: Node<*>) {
 
         // TODO: Refactor State creation code. Move to function
         // check moving north
-        if (isLegalMove(state, obstacles, northPoint)) {
+        if (isLegalMove(state, obstacles, northPoint, dimensions)) {
             val robotCopy = Robot(northPoint)
             val blockPositions = state.value.copyBlockPositions()
             val storagePositions = state.value.copyStoragePositions()
@@ -135,7 +136,7 @@ class Graph(val root: Node<*>) {
         }
 
         // check moving south
-        if (isLegalMove(state, obstacles, southPoint)) {
+        if (isLegalMove(state, obstacles, southPoint, dimensions)) {
             val robotCopy = Robot(southPoint)
             val blockPositions = state.value.copyBlockPositions()
             val storagePositions = state.value.copyStoragePositions()
@@ -144,7 +145,7 @@ class Graph(val root: Node<*>) {
         }
 
         // check moving east
-        if (isLegalMove(state, obstacles, eastPoint)) {
+        if (isLegalMove(state, obstacles, eastPoint, dimensions)) {
             val robotCopy = Robot(eastPoint)
             val blockPositions = state.value.copyBlockPositions()
             val storagePositions = state.value.copyStoragePositions()
@@ -153,7 +154,7 @@ class Graph(val root: Node<*>) {
         }
 
         // check moving west
-        if (isLegalMove(state, obstacles, westPoint)) {
+        if (isLegalMove(state, obstacles, westPoint, dimensions)) {
             val robotCopy = Robot(westPoint)
             val blockPositions = state.value.copyBlockPositions()
             val storagePositions = state.value.copyStoragePositions()
@@ -168,13 +169,15 @@ class Graph(val root: Node<*>) {
      * @param state The current state of the map
      * @param obstacles The set of obstacle positions
      * @param nextPosition The position of the potential move
+     * @param dimensions The number of rows and columns in the map. first is rows, second is cols
      * @return True if the move is legal, false otherwise
      */
-    fun isLegalMove(state: Node<State>, obstacles: Barriers, nextPosition: Point): Boolean {
+    fun isLegalMove(state: Node<State>, obstacles: Barriers, nextPosition: Point, dimensions: Pair<Int, Int>): Boolean {
         // for now, only check to see if the position matches an obstacle's position
         if (obstacles.contains(nextPosition)) return false
         // TODO: also make sure the point isn't out of bounds
         if (nextPosition.x < 0 || nextPosition.y < 0) return false
+        if (nextPosition.x >= dimensions.second || nextPosition.y >= dimensions.first) return false
         return true
     }
 
