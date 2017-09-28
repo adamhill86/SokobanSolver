@@ -1,11 +1,11 @@
 package edu.odu.cs480.adamhill
-// TODO: Experiment with changing blockPositions and storagePositions to HashSets
+
 /**
  * Maintains a record of where the robot, blocks, storage positions, and obstacles are
  */
-data class State(val robot: Robot, val blockPositions: MutableList<Point>,
-                 val storagePositions: MutableList<Point>) {
-    constructor(): this(Robot(), mutableListOf<Point>(), mutableListOf<Point>())
+data class State(val robot: Robot, val blockPositions: HashSet<Point>,
+                 val storagePositions: HashSet<Point>) {
+    constructor(): this(Robot(), hashSetOf<Point>(), hashSetOf<Point>())
 
     /**
      * Calculates whether the current state is the goal state.
@@ -15,15 +15,14 @@ data class State(val robot: Robot, val blockPositions: MutableList<Point>,
         blockPositions.forEach {
             if (!storagePositions.contains(it)) return false
         }
-        // TODO: Write unit test for this. Check for reference vs value
         return true
     }
 
     /**
      * Make a deep copy of all block positions
      */
-    fun copyBlockPositions(): MutableList<Point> {
-        val newPositions = mutableListOf<Point>()
+    fun copyBlockPositions(): HashSet<Point> {
+        val newPositions = hashSetOf<Point>()
         blockPositions.forEach { newPositions.add(it) }
         return newPositions
     }
@@ -31,10 +30,17 @@ data class State(val robot: Robot, val blockPositions: MutableList<Point>,
     /**
      * Make a deep copy of all storage positions
      */
-    fun copyStoragePositions(): MutableList<Point> {
-        val newPositions = mutableListOf<Point>()
+    fun copyStoragePositions(): HashSet<Point> {
+        val newPositions = hashSetOf<Point>()
         storagePositions.forEach { newPositions.add(it) }
         return newPositions
+    }
+
+    /**
+     * Compare this state to the goal state but only take into account block positions. Ignore the robot
+     */
+    fun compareToGoal(goal: State): Boolean {
+        return false
     }
 
     override fun toString(): String {

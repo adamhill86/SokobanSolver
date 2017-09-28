@@ -3,6 +3,8 @@ package edu.odu.cs480.adamhill
 class Robot(var position: Point) {
     constructor(): this(Point()) // initialize the robot to (0, 0) if no Point is given
 
+    enum class Direction {NORTH, SOUTH, EAST, WEST}
+
     /**
      * Moves the robot 1 unit up
      */
