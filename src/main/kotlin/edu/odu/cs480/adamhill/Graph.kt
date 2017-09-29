@@ -86,7 +86,7 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
 
         while (!queue.isEmpty()) {
             val current = queue.poll()
-            println(current)
+            //println(current)
             val dist = distance[current]
 
             if (current.value.isGoalState()) {
@@ -231,6 +231,86 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         }
         stack.push(root)
         return stack
+    }
+
+    fun greedyBestFirst(): MutableList<Node<State>>? {
+        val visited: HashSet<Node<State>> = HashSet()
+        val comparator = ManhattanStateComparator()
+        val priorityQueue = PriorityQueue<Node<State>>(10, comparator)
+        val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
+
+        priorityQueue.add(root)
+        visited.add(root)
+
+        while (!priorityQueue.isEmpty()) {
+            val current = priorityQueue.poll()
+
+            if (current.value.isGoalState()) return extractPath(current, predecessor)
+
+            // determine all possible moves from this state if it isn't the goal
+            val moves = calculateMoves(current, barriers, dimensions)
+            moves.forEach { current.addChild(it) }
+
+            for (node in current.childNodes) {
+                // only add new nodes that we haven't visited before
+                if (!visited.contains(node)) {
+                    predecessor[node] = current
+                    visited.add(node)
+                    priorityQueue.add(node)
+                }
+            }
+        }
+
+        return null
+    }
+
+    fun aStarSearch(): MutableList<Node<State>>? {
+        val visited: HashSet<Node<State>> = HashSet()
+        val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
+        val fScore = HashMap<Node<State>, Int>() // the total cost of getting from the root to the goal by passing that node. h(n) + distance
+        val comparator = AStarStateComparator(distance)
+        val priorityQueue = PriorityQueue<Node<State>>(10, comparator)
+        val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
+
+        nodes.forEach {
+            distance[it] = Int.MAX_VALUE // set the initial distance to a number larger than any legitimate path could be
+            fScore[it] = Int.MAX_VALUE
+        }
+
+        distance[root] = 0 // distance from the root to itself
+        fScore[root] = manhattanDistance(root.value.blockPositions, root.value.storagePositions)
+        visited.add(root) // use this to make sure we don't get stuck in an infinite cycle
+        priorityQueue.add(root)
+
+        while (!priorityQueue.isEmpty()) {
+            val current = priorityQueue.poll()
+            if (current.value.isGoalState()) return extractPath(current, predecessor)
+
+            val dist = distance[current]
+
+            // determine all possible moves from this state if it isn't the goal
+            val moves = calculateMoves(current, barriers, dimensions)
+            moves.forEach {
+                current.addChild(it)
+                //distance[it] = Int.MAX_VALUE
+                //fScore[it] = Int.MAX_VALUE
+            }
+
+            for (node in current.childNodes) {
+                if (!visited.contains(node)) {
+                    visited.add(node)
+                    val pathCost = dist as Int + 1
+                    if (!distance.contains(node) || pathCost < distance[node] as Int) {
+                        distance[node] = pathCost
+                        fScore[node] = pathCost + manhattanDistance(node.value.blockPositions, node.value.storagePositions)
+                        println("${node.value} score: ${fScore[node]}")
+                        priorityQueue.add(node)
+                        predecessor[node] = current
+                    }
+                }
+            }
+        }
+        return null
     }
 
     /**

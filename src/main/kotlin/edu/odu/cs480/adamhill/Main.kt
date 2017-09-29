@@ -1,7 +1,7 @@
 package edu.odu.cs480.adamhill
 
 fun main(args: Array<String>) {
-    val file = "data/another.txt"
+    val file = "data/simple2.txt"
     val puzzleFileReader = PuzzleFileReader(file)
     val puzzleInfo = puzzleFileReader.readFile()
     println(puzzleInfo.state.toString())
@@ -14,4 +14,8 @@ fun main(args: Array<String>) {
 
     val dfs = graph.depthFirstSearch()
     println(dfs)
+
+    val gbfs = graph.greedyBestFirst()
+    val astar = graph.aStarSearch()
+    println(astar)
 }

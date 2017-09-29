@@ -26,26 +26,26 @@ class PuzzleFileReader(private val file: String) {
                 when {
                     // Found the robot
                     input[i][j] == 'R' -> {
-                        println("Robot found at $i, $j")
-                        state.robot.position = Point(i, j)
+                        println("Robot found at $j, $i")
+                        state.robot.position = Point(j, i)
                     }
 
                     // Found a box
                     input[i][j] == 'B' -> {
-                        println("Box found at $i, $j")
-                        state.blockPositions.add(Point(i, j))
+                        println("Box found at $j, $i")
+                        state.blockPositions.add(Point(j, i))
                     }
 
                     // Found a storage space
                     input[i][j] == 'S' -> {
-                        println("Storage space found at $i, $j")
-                        state.storagePositions.add(Point(i, j))
+                        println("Storage space found at $j, $i")
+                        state.storagePositions.add(Point(j, i))
                     }
 
                     // Found an obstacle
                     input[i][j] == 'O' -> {
-                        println("Found an obstacle at $i, $j")
-                        barriers.obstaclePositions.add(Point(i, j))
+                        println("Found an obstacle at $j, $i")
+                        barriers.obstaclePositions.add(Point(j, i))
                     }
                 }
             }
