@@ -15,21 +15,34 @@ fun main(args: Array<String>) {
 
         puzzles.forEach {
             val graph = Graph(Node(it.state), it.barriers, it.dimensions)
-            println("Initial state: \n${graph.root}")
+            println("Initial state: \n${graph.root} \n")
+            var startTime: Long = System.nanoTime()
             val path = graph.breadthFirstSearch()
-            displayPath(path, "Breadth-first search")
-            println()
+            var endTime: Long = System.nanoTime()
+            var duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
+            displayPath(path, "Breadth-first search", duration)
+            println("\n")
 
+            startTime = System.nanoTime()
             val dfs = graph.depthFirstSearch()
-            displayPath(dfs, "Iterative Deepening Depth-first search")
-            println()
+            endTime = System.nanoTime()
+            duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
+            displayPath(dfs, "Depth-first search", duration)
+            println("\n")
 
+            startTime = System.nanoTime()
             val gbfs = graph.greedyBestFirst()
-            displayPath(gbfs, "Greedy best-first search")
-            println()
+            endTime = System.nanoTime()
+            duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
+            displayPath(gbfs, "Greedy best-first search", duration)
+            println("\n")
 
+            startTime = System.nanoTime()
             val aStar = graph.aStarSearch()
-            displayPath(aStar, "A*")
+            endTime = System.nanoTime()
+            duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
+            displayPath(aStar, "A*", duration)
+            println("\n")
         }
 
     }
@@ -52,10 +65,10 @@ fun main(args: Array<String>) {
     displayPath(aStar, "A*")*/
 }
 
-private fun displayPath(path: MutableList<Node<State>>?, solutionType: String) {
+private fun displayPath(path: MutableList<Node<State>>?, solutionType: String, time: Long) {
     if (path == null) println("No solution was found")
     else {
-        println("\n$solutionType solution took ${path.size - 1} steps.")
+        println("\n$solutionType solution took ${path.size - 1} steps and $time ms.")
         for (i in 1 until path.size) {
             print("[$i] ${path[i].value}")
             if (i != path.size - 1) println(",")
