@@ -1,56 +1,80 @@
 package edu.odu.cs480.adamhill
 
-import java.io.File
+import java.io.*
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
 
 /**
  * Reads the input puzzle map and generates the initial state
  * @return The initial state and a set of obstacle positions
  */
-class PuzzleFileReader(private val file: String) {
+class PuzzleFileReader(private val filename: String) {
     fun readFile(): PuzzleInfo {
-        val inputStream = File(file).inputStream()
-        val input = mutableListOf<String>() // collect all lines from the file to be processed later
-        inputStream.bufferedReader().useLines { lines -> lines.forEach { input.add(it) } }
+        val input = mutableListOf<String>() // collect all lines from the filename to be processed later
+        var reader: BufferedReader? = null
+
+        try {
+            val file = File(filename)
+            reader = BufferedReader(FileReader(file))
+
+            var line = reader.readLine()
+            while (line != null) {
+                input.add(line)
+                line = reader.readLine()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } finally {
+            try {
+                reader?.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+
         input.forEach { println(it) }
-        val rows = input.size
-        val cols = input[0].length
-        println("Rows: $rows, Cols: $cols")
 
         val state = State()
         val barriers = Barriers()
+        val rows = input.size
 
         // Find robot, boxes, storage, and obstacles
-        for (i in 0 until rows) {
-            for (j in 0 until cols) {
-                // Found the robot
+        for (y in 0 until rows) {
+            val cols = input[y].length
+            for (x in 0 until cols) {
                 when {
                     // Found the robot
-                    input[i][j] == 'R' -> {
-                        println("Robot found at $j, $i")
-                        state.robot.position = Point(j, i)
+                    input[y][x] == 'R' -> {
+                        state.robot.position = Point(x, y)
                     }
 
                     // Found a box
-                    input[i][j] == 'B' -> {
-                        println("Box found at $j, $i")
-                        state.blockPositions.add(Point(j, i))
+                    input[y][x] == 'B' -> {
+                        state.blockPositions.add(Point(x, y))
                     }
 
                     // Found a storage space
-                    input[i][j] == 'S' -> {
-                        println("Storage space found at $j, $i")
-                        state.storagePositions.add(Point(j, i))
+                    input[y][x] == 'S' -> {
+                        state.storagePositions.add(Point(x, y))
                     }
 
                     // Found an obstacle
-                    input[i][j] == 'O' -> {
-                        println("Found an obstacle at $j, $i")
-                        barriers.obstaclePositions.add(Point(j, i))
+                    input[y][x] == 'O' -> {
+                        barriers.obstaclePositions.add(Point(x, y))
                     }
                 }
             }
         }
-        println(state)
-        return PuzzleInfo(state, barriers, Pair(rows, cols))
+        val maxCols = findMaxCols(input)
+        return PuzzleInfo(state, barriers, Pair(rows, maxCols))
+    }
+
+    private fun findMaxCols(input: MutableList<String>): Int {
+        var max = 0
+        input.forEach {
+            if (it.length > max) max = it.length
+        }
+        return max
     }
 }

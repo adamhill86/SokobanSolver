@@ -1,12 +1,11 @@
 package edu.odu.cs480.adamhill
 
-import java.math.BigInteger
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
 class Graph(val root: Node<State>, private val barriers: Barriers, private val dimensions: Pair<Int, Int>) {
-    val nodes: MutableList<Node<State>> = mutableListOf()
+    private val nodes: MutableList<Node<State>> = mutableListOf()
 
     fun addNode(node: Node<State>) {
         nodes.add(node)
@@ -17,77 +16,18 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
     }
 
     /**
-     * Breadth-first search with shortest path algorithm
-     * @param goal The node we're looking for
-     * @return A list of nodes representing the shortest path to the goal or null if none is found
-     */
-    fun bfs(goal: Node<State>): MutableList<Node<State>>? {
-        val visited: HashSet<Node<State>> = HashSet()
-        val queue: Queue<Node<State>> = LinkedList<Node<State>>()
-        val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
-        val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
-
-        nodes.forEach {
-            distance[it] = Int.MAX_VALUE // set the initial distance to a number larger than any legitimate path could be
-        }
-
-        distance[root] = 0 // distance from the root to itself
-        visited.add(root) // use this to make sure we don't get stuck in an infinite cycle
-        queue.add(root)
-
-        while (!queue.isEmpty() && distance[goal] == Int.MAX_VALUE) {
-            val current = queue.poll()
-            val dist = distance[current]
-            
-            // determine all possible moves from this state
-            val moves = calculateMoves(current, barriers, dimensions)
-            moves.forEach {
-                current.addChild(it)
-                distance[it] = Int.MAX_VALUE
-            }
-
-            for (node in current.childNodes) {
-                // only add new nodes that we haven't visited before
-                if (!visited.contains(node)) {
-                    // casts here are required for null safety
-                    if (distance[node] as Int > (dist as Int + 1)) {
-                        distance[node] = dist + 1
-                        predecessor[node] = current
-                        visited.add(node)
-                        queue.add(node)
-                    }
-                }
-            }
-        }
-
-        if (distance[goal] != Int.MAX_VALUE) {
-            return extractPath(goal, predecessor)
-        }
-        return null // return null if no path to the goal was not found
-    }
-
-
-    /**
      * This version does not take in a goal state and instead tries to determine it during the while loop
      */
     fun breadthFirstSearch(): MutableList<Node<State>>? {
         val visited: HashSet<Node<State>> = HashSet()
         val queue: Queue<Node<State>> = LinkedList<Node<State>>()
-        val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
         val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
 
-        nodes.forEach {
-            distance[it] = Int.MAX_VALUE // set the initial distance to a number larger than any legitimate path could be
-        }
-
-        distance[root] = 0 // distance from the root to itself
         visited.add(root) // use this to make sure we don't get stuck in an infinite cycle
         queue.add(root)
 
         while (!queue.isEmpty()) {
             val current = queue.poll()
-            //println(current)
-            val dist = distance[current]
 
             if (current.value.isGoalState()) {
                 return extractPath(current, predecessor)
@@ -95,21 +35,14 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
 
             // determine all possible moves from this state if it isn't the goal
             val moves = calculateMoves(current, barriers, dimensions)
-            moves.forEach {
-                current.addChild(it)
-                distance[it] = Int.MAX_VALUE
-            }
+            moves.forEach { current.addChild(it) }
 
             for (node in current.childNodes) {
                 // only add new nodes that we haven't visited before
                 if (!visited.contains(node)) {
-                    // casts here are required for null safety
-                    if (distance[node] as Int > (dist as Int + 1)) {
-                        distance[node] = dist + 1
-                        predecessor[node] = current
-                        visited.add(node)
-                        queue.add(node)
-                    }
+                    predecessor[node] = current
+                    visited.add(node)
+                    queue.add(node)
                 }
             }
         }
@@ -118,38 +51,28 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         return null
     }
 
-    fun depthFirstSearch(): Stack<Node<State>>? {
+    fun depthFirstSearch(): MutableList<Node<State>>? {
         val visited: HashSet<Node<State>> = HashSet()
         val stack: Stack<Node<State>> = Stack()
-        val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
         val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
 
-        nodes.forEach {
-            distance[it] = Int.MAX_VALUE // set the initial distance to a number larger than any legitimate path could be
-        }
-
-        distance[root] = 0 // distance from the root to itself
         stack.push(root)
 
         while (!stack.isEmpty()) {
             val current = stack.pop()
 
             if (current.value.isGoalState()) {
-                return dfsPath(current, predecessor, distance)
+                return extractPath(current, predecessor)
             }
 
             if (!visited.contains(current)) {
                 visited.add(current)
 
                 val moves = calculateMoves(current, barriers, dimensions)
-                moves.forEach {
-                    current.addChild(it)
-                    distance[it] = Int.MAX_VALUE
-                }
+                moves.forEach { current.addChild(it) }
 
                 current.childNodes.forEach {
-                    if (distance[it] as Int > (distance[current] as Int + 1) && (!visited.contains(it))) {
-                        distance[it] = distance[current] as Int + 1
+                    if (!visited.contains(it)) {
                         predecessor[it] = current
                         stack.push(it)
                     }
@@ -161,37 +84,47 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         return null
     }
 
-    fun dfs(goal: Node<State>): MutableList<Node<State>>? {
-        val visited: HashSet<Node<State>> = HashSet()
-        val stack: Stack<Node<State>> = Stack()
-        val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
-        val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
+    /*
+    fun iterativeDeepeningDFS(): MutableList<Node<State>>? {
+        val visited = hashSetOf<Node<State>>()
+        val stack = Stack<Node<State>>()
+        val predecessor = hashMapOf<Node<State>, Node<State>>()
+        var maxDepth = 1 // initial depth
+        val goalFound = false
 
-        nodes.forEach {
-            distance[it] = Int.MAX_VALUE // set the initial distance to a number larger than any legitimate path could be
-        }
-
-        distance[root] = 0 // distance from the root to itself
         stack.push(root)
 
-        while (!stack.isEmpty() && distance[goal] == Int.MAX_VALUE) {
-            val current = stack.pop()
+        while (!goalFound) {
+            var depth = 0
+            while (!stack.isEmpty()) {
+                val current = stack.pop()
 
-            if (!visited.contains(current)) {
-                visited.add(current)
-                current.childNodes.forEach {
-                    if (distance[it] as Int > (distance[current] as Int + 1)) {
-                        distance[it] = distance[current] as Int + 1
-                        predecessor[it] = current
-                        stack.push(it)
+                if (current.value.isGoalState()) {
+                    return extractPath(current, predecessor)
+                }
+
+                if (!visited.contains(current)) {
+                    visited.add(current)
+
+                    if (depth < maxDepth) {
+                        val moves = calculateMoves(current, barriers, dimensions)
+                        moves.forEach { current.addChild(it) }
+
+                        current.childNodes.forEach {
+                            if (!visited.contains(it)) {
+                                predecessor[it] = current
+                                stack.push(it)
+                            }
+                        }
+                        depth++
                     }
                 }
             }
+            maxDepth++
+            visited.clear()
         }
-
-        if (distance[goal] != Int.MAX_VALUE) return extractPath(goal, predecessor)
-        return null // no path to the goal was found
-    }
+        return null
+    }*/
 
     /**
      * Returns a list of Nodes representing the shortest path from the root to the goal
@@ -203,34 +136,14 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
             : MutableList<Node<State>> {
         var node = goal
         val path = mutableListOf<Node<State>>()
-        var numNodes = 0
 
         while (node != root) {
-            numNodes++
-            println(numNodes)
             path.add(0, node)
             node = predecessor[node] as Node<State> // cast is required due to null safety
         }
 
         path.add(0, root)
         return path
-    }
-
-    // TODO: Remove this
-    private fun dfsPath(goal: Node<State>, predecessor: HashMap<Node<State>, Node<State>>,
-                        distance: HashMap<Node<State>, Int>): Stack<Node<State>> {
-        var node = goal
-        val stack = Stack<Node<State>>()
-        var numNodes = 0
-
-        while (node != root) {
-            numNodes++
-            println(numNodes)
-            stack.push(node)
-            node = predecessor[node] as Node<State>
-        }
-        stack.push(root)
-        return stack
     }
 
     fun greedyBestFirst(): MutableList<Node<State>>? {
@@ -268,7 +181,7 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         val visited: HashSet<Node<State>> = HashSet()
         val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
         val fScore = HashMap<Node<State>, Int>() // the total cost of getting from the root to the goal by passing that node. h(n) + distance
-        val comparator = AStarStateComparator(distance)
+        val comparator = AStarStateComparator(distance, barriers)
         val priorityQueue = PriorityQueue<Node<State>>(10, comparator)
         val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
 
@@ -303,7 +216,7 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
                     if (!distance.contains(node) || pathCost < distance[node] as Int) {
                         distance[node] = pathCost
                         fScore[node] = pathCost + manhattanDistance(node.value.blockPositions, node.value.storagePositions)
-                        println("${node.value} score: ${fScore[node]}")
+                        //println("${node.value} score: ${fScore[node]}")
                         priorityQueue.add(node)
                         predecessor[node] = current
                     }
@@ -320,7 +233,7 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
      * @param dimensions The number of rows and columns in the map
      * @return The list of all possible moves (or an empty list if none exist)
      */
-    fun calculateMoves(state: Node<State>, obstacles: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>> {
+    private fun calculateMoves(state: Node<State>, obstacles: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>> {
         val possibleMoves = mutableListOf<Node<State>>()
         val robot = state.value.robot
         val northPoint = Point(robot.position.x, robot.position.y - 1)
@@ -331,60 +244,40 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         // TODO: Refactor State creation code. Move to function
         // check moving north
         if (isLegalMove(state, obstacles, Robot.Direction.NORTH, northPoint, dimensions)) {
-            val robotCopy = Robot(northPoint)
-            val blockPositions = state.value.copyBlockPositions()
-            val storagePositions = state.value.copyStoragePositions()
-
-            if (isBlockMove(state, northPoint)) {
-                moveBlock(blockPositions, Robot.Direction.NORTH, northPoint)
-            }
-
-            val northState = Node(State(robotCopy, blockPositions, storagePositions))
+            val northState = Node(createNewState(state, Robot.Direction.NORTH, northPoint))
             possibleMoves.add(northState)
         }
 
         // check moving south
         if (isLegalMove(state, obstacles, Robot.Direction.SOUTH, southPoint, dimensions)) {
-            val robotCopy = Robot(southPoint)
-            val blockPositions = state.value.copyBlockPositions()
-            val storagePositions = state.value.copyStoragePositions()
-
-            if (isBlockMove(state, southPoint)) {
-                moveBlock(blockPositions, Robot.Direction.SOUTH, southPoint)
-            }
-
-            val southState = Node(State(robotCopy, blockPositions, storagePositions))
+            val southState = Node(createNewState(state, Robot.Direction.SOUTH, southPoint))
             possibleMoves.add(southState)
         }
 
         // check moving east
         if (isLegalMove(state, obstacles, Robot.Direction.EAST, eastPoint, dimensions)) {
-            val robotCopy = Robot(eastPoint)
-            val blockPositions = state.value.copyBlockPositions()
-            val storagePositions = state.value.copyStoragePositions()
-
-            if (isBlockMove(state, eastPoint)) {
-                moveBlock(blockPositions, Robot.Direction.EAST, eastPoint)
-            }
-
-            val eastState = Node(State(robotCopy, blockPositions, storagePositions))
+            val eastState = Node(createNewState(state, Robot.Direction.EAST, eastPoint))
             possibleMoves.add(eastState)
         }
 
         // check moving west
         if (isLegalMove(state, obstacles, Robot.Direction.WEST, westPoint, dimensions)) {
-            val robotCopy = Robot(westPoint)
-            val blockPositions = state.value.copyBlockPositions()
-            val storagePositions = state.value.copyStoragePositions()
-
-            if (isBlockMove(state, westPoint)) {
-                moveBlock(blockPositions, Robot.Direction.WEST, westPoint)
-            }
-
-            val westState = Node(State(robotCopy, blockPositions, storagePositions))
+            val westState = Node(createNewState(state, Robot.Direction.WEST, westPoint))
             possibleMoves.add(westState)
         }
         return possibleMoves
+    }
+
+    private fun createNewState(state: Node<State>, direction: Robot.Direction, point: Point): State {
+        val robotCopy = Robot(point)
+        val blockPositions = state.value.copyBlockPositions()
+        val storagePositions = state.value.copyStoragePositions()
+
+        if (isBlockMove(state, point)) {
+            moveBlock(blockPositions, direction, point)
+        }
+
+        return State(robotCopy, blockPositions, storagePositions)
     }
 
     /**
@@ -435,7 +328,7 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
     /**
      * Returns true if a block should be moved. False otherwise
      */
-    fun isBlockMove(state: Node<State>, nextPosition: Point): Boolean {
+    private fun isBlockMove(state: Node<State>, nextPosition: Point): Boolean {
         if (state.value.blockPositions.contains(nextPosition)) {
             return true
         }
@@ -445,7 +338,7 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
     /**
      * Moves a block one unit in a given direction
      */
-    fun moveBlock(blockPositions: HashSet<Point>, direction: Robot.Direction, nextPosition: Point) {
+    private fun moveBlock(blockPositions: HashSet<Point>, direction: Robot.Direction, nextPosition: Point) {
         blockPositions.remove(nextPosition)
 
         when (direction) {
