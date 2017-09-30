@@ -26,18 +26,28 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         visited.add(root) // use this to make sure we don't get stuck in an infinite cycle
         queue.add(root)
 
+        val startTime: Long = System.nanoTime() // keep track of when we started
+
         while (!queue.isEmpty()) {
+            val currentTime: Long = System.nanoTime()
+            if (((currentTime - startTime) / 1000000) >= 600000) { // we haven't found a solution in 10 minutes
+                println("No solution found after 10 minutes.")
+                return null
+            }
+
             val current = queue.poll()
 
             if (current.value.isGoalState()) {
+                visited.clear()
+                queue.clear()
                 return extractPath(current, predecessor)
             }
 
             // determine all possible moves from this state if it isn't the goal
             val moves = calculateMoves(current, barriers, dimensions)
-            moves.forEach { current.addChild(it) }
+            //moves.forEach { current.addChild(it) }
 
-            for (node in current.childNodes) {
+            for (node in moves) {
                 // only add new nodes that we haven't visited before
                 if (!visited.contains(node)) {
                     predecessor[node] = current
@@ -58,10 +68,20 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
 
         stack.push(root)
 
+        val startTime: Long = System.nanoTime() // keep track of when we started
+
         while (!stack.isEmpty()) {
+            val currentTime: Long = System.nanoTime()
+            if (((currentTime - startTime) / 1000000) >= 600000) { // we haven't found a solution in 10 minutes
+                println("No solution found after 10 minutes.")
+                return null
+            }
+
             val current = stack.pop()
 
             if (current.value.isGoalState()) {
+                visited.clear()
+                stack.clear()
                 return extractPath(current, predecessor)
             }
 
@@ -69,9 +89,9 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
                 visited.add(current)
 
                 val moves = calculateMoves(current, barriers, dimensions)
-                moves.forEach { current.addChild(it) }
+                //moves.forEach { current.addChild(it) }
 
-                current.childNodes.forEach {
+                moves.forEach {
                     if (!visited.contains(it)) {
                         predecessor[it] = current
                         stack.push(it)
@@ -148,8 +168,8 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
 
     fun greedyBestFirst(): MutableList<Node<State>>? {
         val visited: HashSet<Node<State>> = HashSet()
-        val comparator = ManhattanStateComparator()
-        val priorityQueue = PriorityQueue<Node<State>>(10, comparator)
+        val comparator = GreedyComparator(barriers)
+        val priorityQueue = PriorityQueue<Node<State>>(2000, comparator)
         val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
 
         priorityQueue.add(root)
@@ -158,13 +178,19 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
         while (!priorityQueue.isEmpty()) {
             val current = priorityQueue.poll()
 
-            if (current.value.isGoalState()) return extractPath(current, predecessor)
+            if (current.value.isGoalState()) {
+                // try to trigger gc
+                visited.clear()
+                priorityQueue.clear()
+                System.gc()
+                return extractPath(current, predecessor)
+            }
 
             // determine all possible moves from this state if it isn't the goal
             val moves = calculateMoves(current, barriers, dimensions)
-            moves.forEach { current.addChild(it) }
+            //moves.forEach { current.addChild(it) }
 
-            for (node in current.childNodes) {
+            for (node in moves) {
                 // only add new nodes that we haven't visited before
                 if (!visited.contains(node)) {
                     predecessor[node] = current
@@ -180,43 +206,44 @@ class Graph(val root: Node<State>, private val barriers: Barriers, private val d
     fun aStarSearch(): MutableList<Node<State>>? {
         val visited: HashSet<Node<State>> = HashSet()
         val distance = HashMap<Node<State>, Int>() // the distance between the root and each node
-        val fScore = HashMap<Node<State>, Int>() // the total cost of getting from the root to the goal by passing that node. h(n) + distance
         val comparator = AStarStateComparator(distance, barriers)
-        val priorityQueue = PriorityQueue<Node<State>>(10, comparator)
+        val priorityQueue = PriorityQueue<Node<State>>(2000, comparator)
         val predecessor = HashMap<Node<State>, Node<State>>() // Previous node in optimal path from root
 
         nodes.forEach {
             distance[it] = Int.MAX_VALUE // set the initial distance to a number larger than any legitimate path could be
-            fScore[it] = Int.MAX_VALUE
         }
 
         distance[root] = 0 // distance from the root to itself
-        fScore[root] = manhattanDistance(root.value.blockPositions, root.value.storagePositions)
         visited.add(root) // use this to make sure we don't get stuck in an infinite cycle
         priorityQueue.add(root)
 
         while (!priorityQueue.isEmpty()) {
             val current = priorityQueue.poll()
-            if (current.value.isGoalState()) return extractPath(current, predecessor)
+            if (current.value.isGoalState()) {
+                // try to trigger garbage collection
+                visited.clear()
+                distance.clear()
+                priorityQueue.clear()
+                System.gc()
+                return extractPath(current, predecessor)
+            }
 
             val dist = distance[current]
 
             // determine all possible moves from this state if it isn't the goal
             val moves = calculateMoves(current, barriers, dimensions)
+            /*
             moves.forEach {
                 current.addChild(it)
-                //distance[it] = Int.MAX_VALUE
-                //fScore[it] = Int.MAX_VALUE
-            }
+            }*/
 
-            for (node in current.childNodes) {
+            for (node in moves) {
                 if (!visited.contains(node)) {
                     visited.add(node)
                     val pathCost = dist as Int + 1
                     if (!distance.contains(node) || pathCost < distance[node] as Int) {
                         distance[node] = pathCost
-                        fScore[node] = pathCost + manhattanDistance(node.value.blockPositions, node.value.storagePositions)
-                        //println("${node.value} score: ${fScore[node]}")
                         priorityQueue.add(node)
                         predecessor[node] = current
                     }

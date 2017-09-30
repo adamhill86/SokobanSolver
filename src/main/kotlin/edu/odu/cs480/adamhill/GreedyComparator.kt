@@ -6,9 +6,8 @@ package edu.odu.cs480.adamhill
  * First, it calculates the Manhattan distances between all blocks and storage spaces.
  * Second, it checks to see if a node is in a corner (that is, surrounded by obstacles on at least 2 adjacent sides.
  * If it is, it adds a very large arbitrary number to the score so the node gets pushed to the back of the queue.
- * Finally, it also adds in the path cost.
  */
-class AStarStateComparator(private val distance: HashMap<Node<State>, Int>, private val barriers: Barriers):
+class GreedyComparator(private val barriers: Barriers):
         Comparator<Node<State>> {
     /**
      * This function determines the priority of states in the PriorityQueue.
@@ -16,15 +15,14 @@ class AStarStateComparator(private val distance: HashMap<Node<State>, Int>, priv
      * Then, we check to see if either node is in a corner.
      * If it is, add a very large number to it to force it to the back of the queue.
      * Otherwise, add 0.
-     * Finally, it also adds in the total path cost.
      * @return 1 if the right-hand side node is greater than the left-hand side,
      * -1 if lhs is greater than rhs, 0 if they're equal
      */
     override fun compare(lhs: Node<State>, rhs: Node<State>): Int {
         val lhsManhattanDistance = manhattanDistance(lhs.value.blockPositions, lhs.value.storagePositions)
         val rhsManhattanDistance = manhattanDistance(rhs.value.blockPositions, rhs.value.storagePositions)
-        val lhsTotal = distance[lhs] as Int + lhsManhattanDistance + eliminateCornerStates(lhs.value)
-        val rhsTotal = distance[rhs] as Int + rhsManhattanDistance + eliminateCornerStates(rhs.value)
+        val lhsTotal = lhsManhattanDistance + eliminateCornerStates(lhs.value)
+        val rhsTotal = rhsManhattanDistance + eliminateCornerStates(rhs.value)
 
         if (lhsTotal < rhsTotal) return -1
         if (lhsTotal > rhsTotal) return 1

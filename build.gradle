@@ -1,5 +1,5 @@
 group 'edu.odu.cs480.adamhill'
-version '0.9'
+version '1.0'
 
 buildscript {
     ext.kotlin_version = '1.1.51'
@@ -21,6 +21,7 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+
     testCompile 'junit:junit:4.12'
 }
 

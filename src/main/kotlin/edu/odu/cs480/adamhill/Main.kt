@@ -14,35 +14,43 @@ fun main(args: Array<String>) {
         }
 
         puzzles.forEach {
-            val graph = Graph(Node(it.state), it.barriers, it.dimensions)
-            println("Initial state: \n${graph.root} \n")
+            println("Initial state: \n${it.state} \n")
+
             var startTime: Long = System.nanoTime()
-            val path = graph.breadthFirstSearch()
-            var endTime: Long = System.nanoTime()
+            var aStar = aStar(it.state, it.barriers, it.dimensions)
+            var endTime:Long = System.nanoTime()
             var duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
-            displayPath(path, "Breadth-first search", duration)
+            displayPath(aStar, "A*", duration)
             println("\n")
+            aStar = null
+            System.gc()
 
             startTime = System.nanoTime()
-            val dfs = graph.depthFirstSearch()
-            endTime = System.nanoTime()
-            duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
-            displayPath(dfs, "Depth-first search", duration)
-            println("\n")
-
-            startTime = System.nanoTime()
-            val gbfs = graph.greedyBestFirst()
+            var gbfs = greedyBest(it.state, it.barriers, it.dimensions)
             endTime = System.nanoTime()
             duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
             displayPath(gbfs, "Greedy best-first search", duration)
             println("\n")
+            gbfs = null
+            System.gc()
 
             startTime = System.nanoTime()
-            val aStar = graph.aStarSearch()
+            var path = bfs(it.state, it.barriers, it.dimensions)
             endTime = System.nanoTime()
             duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
-            displayPath(aStar, "A*", duration)
+            displayPath(path, "Breadth-first search", duration)
             println("\n")
+            path = null
+            System.gc()
+
+            startTime = System.nanoTime()
+            var dfs = dfs(it.state, it.barriers, it.dimensions)
+            endTime = System.nanoTime()
+            duration = (endTime - startTime)/1000000 //divide by 1000000 to get milliseconds
+            displayPath(dfs, "Depth-first search", duration)
+            println("\n")
+            dfs = null
+            System.gc()
         }
 
     }
@@ -74,4 +82,24 @@ private fun displayPath(path: MutableList<Node<State>>?, solutionType: String, t
             if (i != path.size - 1) println(",")
         }
     }
+}
+
+private fun aStar(state: State, barriers: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>>? {
+    val graph = Graph(Node(state), barriers, dimensions)
+    return graph.aStarSearch()
+}
+
+private fun greedyBest(state: State, barriers: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>>? {
+    val graph = Graph(Node(state), barriers, dimensions)
+    return graph.greedyBestFirst()
+}
+
+private fun bfs(state: State, barriers: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>>? {
+    val graph = Graph(Node(state), barriers, dimensions)
+    return graph.breadthFirstSearch()
+}
+
+private fun dfs(state: State, barriers: Barriers, dimensions: Pair<Int, Int>): MutableList<Node<State>>? {
+    val graph = Graph(Node(state), barriers, dimensions)
+    return graph.depthFirstSearch()
 }
